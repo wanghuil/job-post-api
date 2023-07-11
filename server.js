@@ -1,4 +1,5 @@
 import express from 'express'
+import morgan from 'morgan'
 import dotenv from 'dotenv'
 dotenv.config()
 
@@ -13,6 +14,12 @@ import notFoundMiddleware from './middleware/not-found.js'
 import errorHandlerMiddleware from './middleware/error-handler.js'
 
 const app = express()
+
+app.use(express.json())
+
+if (process.env.NODE_ENV !== 'production') {
+  app.use(morgan('dev'))
+}
 
 const port = process.env.PORT || 4000
 
