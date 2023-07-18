@@ -29,8 +29,11 @@ const UserSchema = new mongoose.Schema({
 })
 
 UserSchema.pre('save', async function() {
-  const salt = await bycrpt.genSalt(10);
-  this.password = await bycrpt.hash(this.password, salt)
+
+  if (this.isModified('password')) {
+    const salt = await bycrpt.genSalt(10);
+    this.password = await bycrpt.hash(this.password, salt)
+  }
 })
 
 UserSchema.methods.createJwt = function() {

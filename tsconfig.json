@@ -1,0 +1,11 @@
+{
+  "compilerOptions": {
+    "module": "nodenext",
+    "outDir": "./built",
+    "allowJs": true,
+    "target": "es5",
+    "esModuleInterop": true,
+    "moduleResolution": "nodenext" 
+  },
+  "include": ["./**/*"]
+}

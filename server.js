@@ -12,8 +12,10 @@ import jobRouter from './routes/jobRoutes.js'
 // middleware
 import notFoundMiddleware from './middleware/not-found.js'
 import errorHandlerMiddleware from './middleware/error-handler.js'
+import authenticator from './middleware/auth.js'
 
 const app = express()
+
 
 app.use(express.json())
 

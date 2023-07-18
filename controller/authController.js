@@ -1,5 +1,5 @@
 import User from '../models/User.js'
-import { BadRequestError, NotFoundError } from '../errors/index.js'
+import { BadRequestError, NotFoundError, UnAuthenticatedError } from '../errors/index.js'
 
 const register = async (req, res, next) => {
   // extract form fields from body
@@ -45,15 +45,28 @@ const login = async (req, res, next) => {
   const isPasswordCorrect = await user.comparePassword(password)
   console.log(isPasswordCorrect);
   if (!isPasswordCorrect) {
-    return next(new Error('Password incorrect'))
+    return next(new UnAuthenticatedError('Password incorrect'))
   }
 
+  user.password = undefined
   // return user info to frontend with JWT token
   const token = user.createJwt()
   res.status(200).json({ user, token })
 }
 
-const updateUser = (req, res) => {
+const updateUser = async (req, res) => {
+  const { name, password } = req.body
+
+  const user = await User.findOne({ _id: req.user.userId })
+
+  user.name = name ?? user.name
+
+  if (password) {
+    user.password = password
+  }
+
+  await user.save()
+
   res.status(200).json( {msg: 'update success'})
 }
 
