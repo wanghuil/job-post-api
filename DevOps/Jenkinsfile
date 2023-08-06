@@ -1,0 +1,23 @@
+pipeline {
+    agent any
+
+    environment {
+        AWS_CRED              = 'aws_jr10_wanda'
+        ECR_REPOSITORY        = credentials('job_post_api_ecr')
+        AWS_ID                = credentials('aws_id')
+        IMAGE_TAG             = 'latest'
+    }
+
+    stages {
+        stage('Build and Push Docker Image') {
+            steps {
+                script {
+                    def dockerImage = docker.build("${ECR_REPOSITORY}:${IMAGE_TAG}", '-f ./Dockerfile .')
+                    docker.withRegistry("https://${AWS_ID}.dkr.ecr.us-east-1.amazonaws.com", "ecr:us-east-1:${ECR_REPOSITORY}") {
+                        dockerImage.push("${IMAGE_TAG}")
+                    }
+                }
+            }
+        }
+    }
+}
