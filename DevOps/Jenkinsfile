@@ -29,7 +29,7 @@ pipeline {
         stage('Push Docker Image') {
             steps {
                 script {
-                    docker.withRegistry("https://${AWS_ID}.dkr.ecr.us-east-1.amazonaws.com", "ecr:us-east-1:${ECR_REPOSITORY}") {
+                    docker.withRegistry("https://${AWS_ID}.dkr.ecr.us-east-1.amazonaws.com", "${AWS_CRED}") {
                         dockerImage = docker.image("${IMAGE_NAME}:${IMAGE_TAG}")
                         dockerImage.push()
                     }
