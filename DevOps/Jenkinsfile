@@ -20,22 +20,23 @@ pipeline {
 
         stage('Push Docker Image') {
             steps {
-                script {
-                    sh "aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin ${AWS_ID}.dkr.ecr.us-east-1.amazonaws.com"
-                    sh "docker push ${AWS_ID}.dkr.ecr.us-east-1.amazonaws.com/${IMAGE_NAME}:latest"
+                withAWS(credentials: AWS_CRED, region: 'us-east-1'){
+                    script {
+                        sh "aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin ${AWS_ID}.dkr.ecr.us-east-1.amazonaws.com"
+                        sh "docker push ${AWS_ID}.dkr.ecr.us-east-1.amazonaws.com/${IMAGE_NAME}:latest"
                     }
                 }
+            }
         }
         
 
         stage('Stop Previous Containers') {
             steps {
-                withAWS(credentials: AWS_CRED, region: 'us-east-1') {
                     sh "docker ps -f name=${IMAGE_NAME} -q | xargs --no-run-if-empty docker container stop"
                     sh "docker container ls -a -fname=${IMAGE_NAME} -q | xargs -r docker container rm"
                 }
-            }
         }
+        
 
         stage('Docker Run') {
             steps{
