@@ -13,7 +13,7 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 script {
-                    sh "sudo docker build -t ${IMAGE_NAME} -f ./Dockerfile ."
+                    sh "docker build -t ${IMAGE_NAME} -f ./Dockerfile ."
                 }
             }
         }
@@ -21,11 +21,11 @@ pipeline {
         stage('Run Docker Container') {
             steps {
                 script {
-                    sh "sudo docker run -p 4000:4000 -d ${IMAGE_NAME}"
+                    sh "docker run -p 4000:4000 -d ${IMAGE_NAME}"
                 }
             }
         }
-        
+
         stage('Push Docker Image') {
             steps {
                 script {
