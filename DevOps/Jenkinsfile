@@ -13,6 +13,8 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 script {
+                    sh "docker stop ${IMAGE_NAME}"
+                    sh "docker rm ${IMAGE_NAME}"
                     sh "docker build -t ${IMAGE_NAME} -f ./Dockerfile ."
                 }
             }
@@ -21,7 +23,7 @@ pipeline {
         stage('Run Docker Container') {
             steps {
                 script {
-                    sh "docker run -p 4000:4000 -d ${IMAGE_NAME}"
+                    sh "docker run -p 4000:4000 --network='host' -d ${IMAGE_NAME}"
                 }
             }
         }
@@ -29,7 +31,7 @@ pipeline {
         stage('Push Docker Image') {
             steps {
                 script {
-                    docker.withRegistry("https://${AWS_ID}.dkr.ecr.us-east-1.amazonaws.com", "${AWS_CRED}") {
+                    docker.withRegistry("https://${AWS_ID}.dkr.ecr.us-east-1.amazonaws.com", "${ECR_REPOSITORY}") {
                         dockerImage = docker.image("${IMAGE_NAME}:${IMAGE_TAG}")
                         dockerImage.push()
                     }
