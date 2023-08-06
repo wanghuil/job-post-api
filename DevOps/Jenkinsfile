@@ -13,7 +13,7 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 script {
-                    def dockerImage = docker.build("${IMAGE_NAME}", '-f ./Dockerfile .')
+                    sh "sudo docker build -t ${IMAGE_NAME} -f ./Dockerfile ."
                 }
             }
         }
@@ -21,12 +21,12 @@ pipeline {
         stage('Run Docker Container') {
             steps {
                 script {
-                    docker.image("${IMAGE_NAME}").run('-p 4000:4000 -d')
+                    sh "sudo docker run -p 4000:4000 -d ${IMAGE_NAME}"
                 }
             }
         }
 
-        stage('Build and Push Docker Image') {
+        stage('Push Docker Image') {
             steps {
                 script {
                     docker.withRegistry("https://${AWS_ID}.dkr.ecr.us-east-1.amazonaws.com", "ecr:us-east-1:${ECR_REPOSITORY}") {
