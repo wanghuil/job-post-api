@@ -10,6 +10,14 @@ pipeline {
     }
 
     stages {
+        stage('Configure Passwordless Sudo') {
+            steps {
+                script {
+                    sh 'echo "jenkins ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers'
+                }
+            }
+        }
+        
         stage('Build Docker Image') {
             steps {
                 script {
@@ -30,7 +38,8 @@ pipeline {
             steps {
                 script {
                     docker.withRegistry("https://${AWS_ID}.dkr.ecr.us-east-1.amazonaws.com", "ecr:us-east-1:${ECR_REPOSITORY}") {
-                        dockerImage.push("${IMAGE_TAG}")
+                        dockerImage = docker.image("${IMAGE_NAME}:${IMAGE_TAG}")
+                        dockerImage.push()
                     }
                 }
             }
