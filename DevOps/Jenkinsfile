@@ -1,5 +1,10 @@
 pipeline {
-    agent any
+    agent {
+        docker {
+            image 'node:16'
+            args '-u root' // Run as root user to perform Docker operations
+        }
+    }
 
     environment {
         AWS_CRED              = 'aws_jr10_wanda'
@@ -9,27 +14,11 @@ pipeline {
         IMAGE_NAME            = 'job_post_api'
     }
 
-    stages {
-        stage('Configure Passwordless Sudo') {
-            steps {
-                script {
-                    sh 'echo "jenkins ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers'
-                }
-            }
-        }
-        
+    stages {    
         stage('Build Docker Image') {
             steps {
                 script {
-                    sh "sudo docker build -t ${IMAGE_NAME} -f ./Dockerfile ."
-                }
-            }
-        }
-
-        stage('Run Docker Container') {
-            steps {
-                script {
-                    sh "sudo docker run -p 4000:4000 -d ${IMAGE_NAME}"
+                    sh "docker build -t ${IMAGE_NAME} -f ./Dockerfile ."
                 }
             }
         }
