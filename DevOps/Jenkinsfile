@@ -10,10 +10,10 @@ pipeline {
     }
 
     stages {    
-        stage('Build Docker Image') {
+        stage('Building image') {
             steps {
                 script {
-                    sh "docker build -t ${IMAGE_NAME} -f ./Dockerfile ."
+                    dockerImage = docker.build "${ECR_REPOSITORY}"
                 }
             }
         }
