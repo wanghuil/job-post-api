@@ -14,7 +14,8 @@ RUN npm install
 COPY . .
 
 # Set the MONGO_URL environment variable
-ENV MONGO_URL="mongodb://host.docker.internal:27017"
+#ENV MONGO_URL="mongodb://host.docker.internal:27017"
+ENV MONGO_URL="mongodb://127.0.0.1:27017"
 
 # Expose the port your application is listening on (if applicable)
 EXPOSE 4000
