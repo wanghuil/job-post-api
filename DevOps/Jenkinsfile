@@ -30,7 +30,7 @@ pipeline {
 
         stage('Stop Previous Containers') {
             steps {
-                withAWS(credentials: AWS_CRED, region: 'ap-southeast-2') {
+                withAWS(credentials: AWS_CRED, region: 'us-east-1') {
                     sh "docker ps -f name=${IMAGE_NAME} -q | xargs --no-run-if-empty docker container stop"
                     sh "docker container ls -a -fname=${IMAGE_NAME} -q | xargs -r docker container rm"
                 }
