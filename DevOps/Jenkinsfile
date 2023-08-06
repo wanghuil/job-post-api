@@ -6,14 +6,29 @@ pipeline {
         ECR_REPOSITORY        = credentials('job_post_api_ecr')
         AWS_ID                = credentials('aws_id')
         IMAGE_TAG             = 'latest'
+        IMAGE_NAME            = 'job_post_api'
     }
 
     stages {
+        stage('Build Docker Image') {
+            steps {
+                script {
+                    def dockerImage = docker.build("${IMAGE_NAME}", '-f ./Dockerfile .')
+                }
+            }
+        }
+
+        stage('Run Docker Container') {
+            steps {
+                script {
+                    docker.image("${IMAGE_NAME}").run('-p 4000:4000 -d')
+                }
+            }
+        }
+
         stage('Build and Push Docker Image') {
             steps {
                 script {
-                    sh 'sudo -i'
-                    def dockerImage = docker.build("${ECR_REPOSITORY}:${IMAGE_TAG}", '-f ./Dockerfile .')
                     docker.withRegistry("https://${AWS_ID}.dkr.ecr.us-east-1.amazonaws.com", "ecr:us-east-1:${ECR_REPOSITORY}") {
                         dockerImage.push("${IMAGE_TAG}")
                     }
