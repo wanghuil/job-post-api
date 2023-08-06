@@ -1,10 +1,5 @@
 pipeline {
-    agent {
-        docker {
-            image 'node:16'
-            args '-u root' // Run as root user to perform Docker operations
-        }
-    }
+    agent any
 
     environment {
         AWS_CRED              = 'aws_jr10_wanda'
@@ -18,11 +13,19 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 script {
-                    sh "docker build -t ${IMAGE_NAME} -f ./Dockerfile ."
+                    sh "sudo docker build -t ${IMAGE_NAME} -f ./Dockerfile ."
                 }
             }
         }
 
+        stage('Run Docker Container') {
+            steps {
+                script {
+                    sh "sudo docker run -p 4000:4000 -d ${IMAGE_NAME}"
+                }
+            }
+        }
+        
         stage('Push Docker Image') {
             steps {
                 script {
