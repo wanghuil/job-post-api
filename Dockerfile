@@ -14,8 +14,9 @@ RUN npm install
 COPY . .
 
 # Set the MONGO_URL environment variable
-#ENV MONGO_URL="mongodb://host.docker.internal:27017"
-ENV MONGO_URL="mongodb://127.0.0.1:27017"
+#ENV MONGO_URL="mongodb://host.docker.internal:27017/job-post"
+ARG MONGODB_SECRET
+ENV MONGO_URL="mongodb+srv://wli:${MONGODB_SECRET}@land-tasker.gcovzya.mongodb.net/?retryWrites=true&w=majority"
 
 # Expose the port your application is listening on (if applicable)
 EXPOSE 4000

@@ -7,13 +7,14 @@ pipeline {
         AWS_ID                = credentials('aws_id')
         IMAGE_TAG             = 'latest'
         IMAGE_NAME            = 'job-post-api'
+        MONGODB_SECRET        = credentials('mongodb_secret')
     }
 
     stages {    
-        stage('Building image') {
+        stage('Build Docker Image') {
             steps {
                 script {
-                    dockerImage = docker.build "${ECR_REPOSITORY}"
+                    sh "docker build -t ${IMAGE_NAME} --build-arg MONGODB_SECRET=${MONGODB_SECRET} -f ./Dockerfile ."
                 }
             }
         }
@@ -35,15 +36,6 @@ pipeline {
                     sh "docker ps -f name=${IMAGE_NAME} -q | xargs --no-run-if-empty docker container stop"
                     sh "docker container ls -a -fname=${IMAGE_NAME} -q | xargs -r docker container rm"
                 }
-        }
-        
-
-        stage('Docker Run') {
-            steps{
-                script {
-                    sh "docker run -d -p 4000:4000 --rm --name ${IMAGE_NAME} ${AWS_ID}.dkr.ecr.us-east-1.amazonaws.com/${IMAGE_NAME}:latest"
-                }
-            }
         }
 
     }
