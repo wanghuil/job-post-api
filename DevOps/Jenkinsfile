@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     environment {
-        AWS_CRED              = credentials('aws_jr10_wanda')
+        AWS_CRED              = 'aws_jr10_wanda'
         ECR_REPOSITORY        = credentials('job_post_api_ecr')
         AWS_ID                = credentials('aws_id')
         IMAGE_TAG             = 'latest'
