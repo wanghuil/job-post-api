@@ -11,13 +11,6 @@ pipeline {
     }
 
     stages {  
-        stage('Stop Previous Containers') {
-            steps {
-                sh "docker ps -f name=${IMAGE_NAME} -q | xargs --no-run-if-empty docker container stop"
-                sh "docker container ls -a -fname=${IMAGE_NAME} -q | xargs -r docker container rm"
-            }
-        }
-  
         stage('Build Docker Image') {
             steps {
                 script {
@@ -31,9 +24,17 @@ pipeline {
                 withAWS(credentials: AWS_CRED, region: 'us-east-1'){
                     script {
                         sh "aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin ${AWS_ID}.dkr.ecr.us-east-1.amazonaws.com"
+                        sh "docker tag ${IMAGE_NAME}:${IMAGE_TAG} ${AWS_ID}.dkr.ecr.us-east-1.amazonaws.com/${IMAGE_NAME}:${IMAGE_TAG}"
                         sh "docker push ${AWS_ID}.dkr.ecr.us-east-1.amazonaws.com/${IMAGE_NAME}:${IMAGE_TAG}"
                     }
                 }
+            }
+        }
+
+        stage('Stop Previous Containers') {
+            steps {
+                sh "docker ps -f name=${IMAGE_NAME} -q | xargs --no-run-if-empty docker container stop"
+                sh "docker container ls -a -fname=${IMAGE_NAME} -q | xargs -r docker container rm"
             }
         }
     }
