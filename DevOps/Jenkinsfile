@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     environment {
-        AWS_CRED              = 'aws_jr10_wanda'
+        AWS_CRED              = credentials('aws_jr10_wanda')
         ECR_REPOSITORY        = credentials('job_post_api_ecr')
         AWS_ID                = credentials('aws_id')
         IMAGE_TAG             = 'latest'
@@ -13,25 +13,25 @@ pipeline {
     stages {  
         stage('Stop Previous Containers') {
             steps {
-                    sh "docker ps -f name=${IMAGE_NAME} -q | xargs --no-run-if-empty docker container stop"
-                    sh "docker container ls -a -fname=${IMAGE_NAME} -q | xargs -r docker container rm"
-                }
+                sh "docker ps -f name=${IMAGE_NAME} -q | xargs --no-run-if-empty docker container stop"
+                sh "docker container ls -a -fname=${IMAGE_NAME} -q | xargs -r docker container rm"
+            }
         }
   
         stage('Build Docker Image') {
             steps {
                 script {
-                    sh "docker build -t ${IMAGE_NAME} --build-arg MONGODB_SECRET=${MONGODB_SECRET} -f ./Dockerfile ."
+                    sh "docker build -t ${IMAGE_NAME}:${IMAGE_TAG} --build-arg MONGODB_SECRET=${MONGODB_SECRET} -f ./Dockerfile ."
                 }
             }
         }
 
         stage('Push Docker Image') {
             steps {
-                withAWS(credentials: AWS_CRED, region: 'us-east-1'){
+                withAWS(credentials: AWS_CRED, region: 'us-east-1') {
                     script {
                         sh "aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin ${AWS_ID}.dkr.ecr.us-east-1.amazonaws.com"
-                        sh "docker push ${AWS_ID}.dkr.ecr.us-east-1.amazonaws.com/${IMAGE_NAME}:latest"
+                        sh "docker push ${AWS_ID}.dkr.ecr.us-east-1.amazonaws.com/${IMAGE_NAME}:${IMAGE_TAG}"
                     }
                 }
             }
