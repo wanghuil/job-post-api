@@ -54,7 +54,7 @@ resource "aws_route_table" "public_route_table" {
   vpc_id = aws_vpc.land_tasker_vpc.id
 
   route {
-    cidr_block = "0.0.0.0/0"
+    cidr_block = var.cidr_blocks_anywhere
     gateway_id = aws_internet_gateway.land_tasker_igw.id
   }
 }
@@ -97,13 +97,13 @@ resource "aws_route_table" "private_route_table_2" {
 
 resource "aws_route" "private_route_1" {
   route_table_id         = aws_route_table.private_route_table_1.id
-  destination_cidr_block = "0.0.0.0/0"
+  destination_cidr_block = var.cidr_blocks_anywhere
   nat_gateway_id         = aws_nat_gateway.nat_gateway_1.id
 }
 
 resource "aws_route" "private_route_2" {
   route_table_id         = aws_route_table.private_route_table_2.id
-  destination_cidr_block = "0.0.0.0/0"
+  destination_cidr_block = var.cidr_blocks_anywhere
   nat_gateway_id         = aws_nat_gateway.nat_gateway_2.id
 }
 
@@ -126,15 +126,22 @@ resource "aws_security_group" "alb_sg" {
   ingress {
     from_port   = 80
     to_port     = 80
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
+    protocol    = var.protocol
+    cidr_blocks = [var.cidr_blocks_anywhere]
   }
   
   ingress {
     from_port   = 443
     to_port     = 443
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
+    protocol    = var.protocol
+    cidr_blocks = [var.cidr_blocks_anywhere]
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = [var.cidr_blocks_anywhere]
   }
 }
 
@@ -145,7 +152,6 @@ resource "aws_lb" "alb" {
   security_groups    = [aws_security_group.alb_sg.id]
   subnets            = [aws_subnet.public_subnet_1.id, aws_subnet.public_subnet_2.id]
 
-  depends_on = [aws_security_group.alb_sg]
 }
 
 resource "aws_lb_listener" "http_listener" {
@@ -171,12 +177,8 @@ resource "aws_lb_listener" "https_listener" {
   certificate_arn   = var.acm_arn
   
   default_action {
-    type             = "fixed-response"
-    fixed_response {
-      content_type = "text/plain"
-      message_body = "OK"
-      status_code  = "200"
-    }
+    type = "forward"
+    target_group_arn = aws_lb_target_group.alb_target_group.arn
   }
 }
 
@@ -210,5 +212,107 @@ resource "aws_ecr_repository" "job_post_api_1" {
 }
 
 #ecs
+resource "aws_security_group" "land_tasker_ecs_sg" {
+  name        = "LandTaskerECSSG"
+  description = "Security group for ECS Fargate"
+  vpc_id      = aws_vpc.land_tasker_vpc.id
 
+  ingress {
+    from_port   = 0
+    to_port     = 65535
+    protocol    = var.protocol
+    security_groups = [aws_security_group.alb_sg.id]
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = [var.cidr_blocks_anywhere]
+  }
+}
+
+resource "aws_ecs_task_definition" "ecs_task" {
+  family                   = "land-tasker-ecs-task"
+  network_mode             = "awsvpc"
+  requires_compatibilities = [var.ecs_launch_type]
+  cpu                              = var.task_cpu
+  memory                           = var.task_memory
+  execution_role_arn = var.execution_role_arn
+  task_role_arn = var.execution_role_arn
+
+  container_definitions = jsonencode([{
+      name  = var.container_name
+      image = var.image
+
+      portMappings = [
+        {
+          name          = "landtaskerecr-5000-tcp"
+          containerPort = var.container_port
+          hostPort      = var.container_port
+          protocol      = var.protocol
+        }
+      ]
+
+      logConfiguration = {
+        logDriver = "awslogs"
+        options = {
+          "awslogs-create-group"  = var.enable_awslogs
+          "awslogs-group"         = "/ecs/${var.container_name}"
+          "awslogs-region"        = var.region  
+          "awslogs-stream-prefix" = "ecs"
+        }
+      }
+  }])
+
+  runtime_platform {
+    operating_system_family = var.task_operating_system_family
+    cpu_architecture        = var.task_cpu_architecture
+  }
+}
+
+resource "aws_ecs_service" "ecs_service" {
+  name            = "land-tasker-ecs-service"
+  cluster         = aws_ecs_cluster.ecs_cluster.id
+  task_definition = aws_ecs_task_definition.ecs_task.arn
+  launch_type     = var.ecs_launch_type
+  desired_count          = var.desired_count
+  enable_execute_command = var.enable_execute_command
+
+  deployment_controller {
+    type = "ECS"
+  }
+
+  deployment_maximum_percent         = var.deployment_maximum_percent
+  deployment_minimum_healthy_percent = var.deployment_minimum_healthy_percent
+
+  network_configuration {
+    subnets = [aws_subnet.private_subnet_1.id, aws_subnet.private_subnet_2.id]
+    security_groups = [aws_security_group.land_tasker_ecs_sg.id]
+    assign_public_ip = false
+  }
+
+  lifecycle {
+    ignore_changes = [task_definition]
+  }
+
+  load_balancer {
+    target_group_arn = aws_lb_target_group.alb_target_group.arn
+    container_name   = var.container_name
+    container_port   = var.container_port
+  }
+}
+
+resource "aws_ecs_cluster" "ecs_cluster" {
+  name = "land-tasker-ecs-cluster"
+
+  setting {
+      name  = "containerInsights"
+      value = var.enable_containerInsights
+    }
+}
+
+resource "aws_cloudwatch_log_group" "cw_log" {
+  name = "/ecs/${var.container_name}"
+}
 
