@@ -6,4 +6,4 @@
 
 *.tfstate
 *.tfstate.backup
-/DevOps/Terraform/.terraform/
+.terraform/
