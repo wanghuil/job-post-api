@@ -3,10 +3,9 @@ pipeline {
 
     environment {
         AWS_CRED              = 'aws_jr10_wanda'
-        ECR_REPOSITORY        = credentials('job_post_api_ecr')
         AWS_ID                = credentials('aws_id')
         IMAGE_TAG             = 'latest'
-        IMAGE_NAME            = 'job-post-api-1'
+        IMAGE_NAME            = 'job-post-api-1' 
         MONGODB_SECRET        = credentials('mongodb_secret')
     }
 
