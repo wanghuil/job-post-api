@@ -7,4 +7,5 @@
 *.tfstate
 *.tfstate.backup
 .terraform/
+
 /DevOps/Terraform/variables.tf
