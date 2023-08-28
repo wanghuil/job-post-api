@@ -10,7 +10,6 @@ variable "dynamodb" {
 
 variable "acm_arn" {
   type    = string
-  default = "arn:aws:acm:us-east-1:498265900521:certificate/6361273a-117e-4009-9186-eb47da959150"
 }
 
 variable "container_port"{
@@ -20,7 +19,6 @@ variable "container_port"{
 
 variable "execution_role_arn" {
   type    = string
-  default = "arn:aws:iam::498265900521:role/ecsTaskExecutionRole"
 }
 
 variable "task_memory" {
@@ -54,7 +52,6 @@ variable "task_cpu_architecture" {
 
 variable "image" {
   description = "ecr image"
-  default     = "498265900521.dkr.ecr.us-east-1.amazonaws.com/job-post-api-1:latest"
   type        = string
 }
 

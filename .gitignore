@@ -3,9 +3,7 @@
 /built
 
 # Ignore Terraform files and directories
-
 *.tfstate
 *.tfstate.backup
 .terraform/
-
-/DevOps/Terraform/variables.tf
+*.tfvars
