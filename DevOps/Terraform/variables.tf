@@ -3,13 +3,14 @@ variable "region" {
   default = "us-east-1"
 }
 
+variable "r53_zone_id" {
+  type    = string
+  default = "Z0313427118PHAQZR2TFW"
+}
+
 variable "dynamodb" {
   type    = string
   default = "terraform-state-lock-dynamodb-land-tasker-backend"
-}
-
-variable "acm_arn" {
-  type    = string
 }
 
 variable "container_port"{
@@ -111,4 +112,9 @@ variable "protocol" {
 variable "cidr_blocks_anywhere" {
   default     = "0.0.0.0/0"
   type        = string
+}
+
+variable "r53_record_name" {
+  type    = string
+  default = "lb.land-tasker.link"
 }

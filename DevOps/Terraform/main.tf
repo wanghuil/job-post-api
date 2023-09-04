@@ -169,12 +169,61 @@ resource "aws_lb_listener" "http_listener" {
   }
 }
 
+provider "aws" {
+  region = var.region
+  alias  = "us_east_1"
+}
+
+#create alb acm 
+resource "aws_acm_certificate" "my_certificate" {
+  domain_name               = var.r53_record_name
+  validation_method         = "DNS"
+  provider                  = aws.us_east_1
+}
+
+#add cname to r53
+locals {
+  domain_validation_options_list = tolist(aws_acm_certificate.my_certificate.domain_validation_options)
+}
+
+resource "aws_route53_record" "cname_record" {
+  zone_id = var.r53_zone_id
+  name    = local.domain_validation_options_list[0].resource_record_name
+  type    = "CNAME"
+  ttl     = 300
+  records = [local.domain_validation_options_list[0].resource_record_value]
+}
+
+# Explicit dependency on the ACM certificate validation
+resource "aws_acm_certificate_validation" "cert_validation" {
+  provider                = aws.us_east_1
+  certificate_arn         = aws_acm_certificate.my_certificate.arn
+  validation_record_fqdns = [aws_route53_record.cname_record.fqdn]
+
+  depends_on = [aws_acm_certificate.my_certificate]
+}
+
+#add a record to point to alb
+resource "aws_route53_record" "a_record" {
+  zone_id = var.r53_zone_id
+  name    = var.r53_record_name
+  type    = "A"
+
+  alias {
+    name                   = aws_lb.alb.dns_name
+    zone_id                = aws_lb.alb.zone_id
+    evaluate_target_health = true
+  }
+
+  depends_on = [aws_acm_certificate_validation.cert_validation]
+}
+
 resource "aws_lb_listener" "https_listener" {
   load_balancer_arn = aws_lb.alb.arn
   port              = 443
   protocol          = "HTTPS"
   ssl_policy        = "ELBSecurityPolicy-2016-08"
-  #certificate_arn   = var.acm_arn
+  certificate_arn   = aws_acm_certificate.my_certificate.arn
   
   default_action {
     type = "forward"
