@@ -27,6 +27,7 @@ The back-end architecture is designed for high availability and fault tolerance:
 # Example: How to get a development environment running
 npm run dev
 - **or if you are using yarn**:
+
 yarn dev
 
 
